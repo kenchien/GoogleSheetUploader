@@ -17,23 +17,22 @@ namespace GoogleSheetUploader
     {
         static async Task Main(string[] args)
         {
-            try
-            {
-                LogHelper.Info("程式開始執行");
+            
+                LogHelper.Info("桃教_網路報修報表 程式開始執行");
 
                 // 讀取設定檔
                 LogHelper.Info("開始讀取設定檔");
-                var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
+                var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";//"Development";
                 LogHelper.Info($"目前環境: {environment}");
 
                 var configuration = new ConfigurationBuilder()
                     .SetBasePath(Directory.GetCurrentDirectory())
-                    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                     .AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true)
                     .AddEnvironmentVariables()
                     .Build();
                 LogHelper.Info("設定檔讀取完成");
-
+try
+            {
                 // 從設定檔讀取參數
                 var spreadsheetId = configuration["GoogleSheets:SpreadsheetId"] ?? throw new InvalidOperationException("SpreadsheetId 未設定");
                 var sheetName = configuration["GoogleSheets:SheetName"] ?? throw new InvalidOperationException("SheetName 未設定");
@@ -185,10 +184,44 @@ namespace GoogleSheetUploader
                 await googleSheetHelper.WriteSheetAsync(sheetName, allData);
 
                 LogHelper.Info("所有處理完成！");
+
+                // 發送完成通知郵件
+                var mailHelper = new MailHelper(configuration);
+                var mailContent = new List<string>
+                {
+                    $"桃教_網路報修報表({environment})排程",
+                    $"處理時間：{DateTime.Now:yyyy-MM-dd HH:mm:ss}",
+                    $"上傳筆數：{allData.Count}",
+                    "此郵件由系統自動發送，請勿直接回覆。"
+                };
+
+                mailHelper.SendMail(mailContent, $@"桃教_網路報修報表({environment})排程成功");
             }
             catch (Exception ex)
             {
                 LogHelper.Error("發生錯誤", ex);
+                
+                // 發送錯誤通知郵件
+                try
+                {
+                    var mailHelper = new MailHelper(configuration);
+                    var errorContent = new List<string>
+                    {
+                        $"桃教_網路報修報表({environment})排程發生錯誤",
+                        $"錯誤時間：{DateTime.Now:yyyy-MM-dd HH:mm:ss}",
+                        $"錯誤詳情：",
+                        ex.Message,
+                        ex.StackTrace,
+                        "請檢查系統日誌以獲取更多資訊。",
+                        "此郵件由系統自動發送，請勿直接回覆。"
+                    };
+
+                    mailHelper.SendMail(errorContent, $"桃教_網路報修報表({environment})排程失敗");
+                }
+                catch (Exception emailEx)
+                {
+                    LogHelper.Error("發送錯誤通知郵件失敗", emailEx);
+                }
             }
         }
 

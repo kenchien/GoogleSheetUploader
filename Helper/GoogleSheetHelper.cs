@@ -108,6 +108,7 @@ namespace GoogleSheetUploader.Helper {
          if (string.IsNullOrEmpty(sheetName)) throw new ArgumentNullException(nameof(sheetName));
 
          try {
+            
             var range = $"{sheetName}!A1:Z1000";
             var clearRequest = new ClearValuesRequest();
             var request = _sheetsService.Spreadsheets.Values.Clear(clearRequest, _spreadsheetId, range);
