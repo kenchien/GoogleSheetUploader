@@ -123,3 +123,5 @@ Google.Apis.Auth/Google.Apis.Auth.OAuth2.Responses.TokenResponse*
 *.credentials 
 
 *.json
+appsettings.Development.json
+appsettings.Production.json
