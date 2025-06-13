@@ -121,3 +121,5 @@ token*.json
 Google.Apis.Auth/Google.Apis.Auth.OAuth2.Responses.TokenResponse*
 *.token
 *.credentials 
+
+*.json
